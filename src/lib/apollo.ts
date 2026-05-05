@@ -248,6 +248,45 @@ export class ApolloClient {
     return json.contact;
   }
 
+  async searchPeople(args: {
+    q_keywords?: string;
+    person_titles?: string[];
+    person_locations?: string[];
+    person_seniorities?: string[];
+    organization_names?: string[];
+    organization_domains?: string[];
+    contact_email_status?: string[];
+    page?: number;
+    per_page?: number;
+  }): Promise<{ people: ApolloPerson[]; total_entries: number; page: number; per_page: number }> {
+    const body: Record<string, unknown> = {
+      page: args.page ?? 1,
+      per_page: args.per_page ?? 10,
+    };
+    if (args.q_keywords) body.q_keywords = args.q_keywords;
+    if (args.person_titles?.length) body['person_titles[]'] = args.person_titles;
+    if (args.person_locations?.length) body['person_locations[]'] = args.person_locations;
+    if (args.person_seniorities?.length) body['person_seniorities[]'] = args.person_seniorities;
+    if (args.organization_names?.length) body['organization_names[]'] = args.organization_names;
+    if (args.organization_domains?.length) body['organization_domains[]'] = args.organization_domains;
+    if (args.contact_email_status?.length) body['contact_email_status[]'] = args.contact_email_status;
+
+    const json = await this.request<{
+      people?: ApolloPerson[];
+      pagination?: { total_entries?: number; page?: number; per_page?: number };
+    }>('/mixed_people/search', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    return {
+      people: json.people ?? [],
+      total_entries: json.pagination?.total_entries ?? 0,
+      page: json.pagination?.page ?? (args.page ?? 1),
+      per_page: json.pagination?.per_page ?? (args.per_page ?? 10),
+    };
+  }
+
   async addContactsToSequence(args: {
     contactId: string;
     sequenceId: string;

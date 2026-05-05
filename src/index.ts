@@ -10,6 +10,7 @@ import { enroll_contact, enrollContactInputSchema } from './tools/enrollContact.
 import { run_outreach_pipeline, runOutreachPipelineInputSchema } from './tools/runPipeline.js';
 import { get_contact, getContactInputSchema } from './tools/getContact.js';
 import { enrich_person, enrichPersonInputSchema } from './tools/enrichPerson.js';
+import { search_people, searchPeopleInputSchema } from './tools/searchPeople.js';
 
 // Claude Desktop MCP expects the server to write only MCP JSON-RPC traffic to stdout.
 // Disable dotenv logs (they break MCP JSON-RPC parsing).
@@ -34,6 +35,13 @@ const server = new McpServer(
 );
 
 const apollo = new ApolloClient({ apiKey: apolloApiKey });
+
+server.registerTool('search_people', {
+  description: 'Search Apollo\'s database of 275M+ people by title, location, company, seniority, and more. Returns a paginated list of matching people with contact details.',
+  inputSchema: searchPeopleInputSchema,
+}, async (args) => {
+  return search_people(args, { apollo });
+});
 
 server.registerTool('enrich_person', {
   description: 'Look up a verified work email for one person by name + company using Apollo\'s enrichment database (275M+ people).',
